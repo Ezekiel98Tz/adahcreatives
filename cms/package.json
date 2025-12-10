@@ -1,0 +1,16 @@
+{
+  "name": "adah-cms",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs"
+  },
+  "dependencies": {
+    "@payloadcms/db-mongodb": "^3.65.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongodb-memory-server": "^10.1.4",
+    "payload": "^3.65.0"
+  }
+}
