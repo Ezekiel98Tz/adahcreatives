@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { Route } from 'react-router-dom'
-import { getHome, getPhotos, getAbout, getServices, getTestimonials, getProjects, submitBooking } from './lib/payloadClient'
+import { Routes, Route } from 'react-router-dom'
+import { getHome, getPhotos, getAbout, getServices, getServicesPage, getTestimonials, getProjects, submitBooking } from './lib/api'
 import Layout from './components/Layout'
 import Navigation from './components/Navigation'
 import HomePage from './pages/HomePage'
@@ -11,6 +11,20 @@ import ContactPage from './pages/ContactPage'
 import ProjectPage from './pages/ProjectPage'
 import NotFoundPage from './pages/NotFoundPage'
 import GalleryPage from './pages/GalleryPage'
+import Footer from './components/Footer'
+import SocialWidgets from './components/SocialWidgets'
+import { AuthProvider } from './context/AuthContext'
+import { ProtectedRoute } from './components/ProtectedRoute'
+import LoginPage from './pages/LoginPage'
+
+// Admin Components
+import { AdminLayout } from './pages/admin/AdminLayout'
+import { DashboardHome } from './pages/admin/DashboardHome'
+import { ProjectsManager } from './pages/admin/ProjectsManager'
+import { HomePageEditor } from './pages/admin/HomePageEditor'
+import { AboutPageEditor } from './pages/admin/AboutPageEditor'
+import { ServicesPageEditor } from './pages/admin/ServicesPageEditor'
+import { GalleryManager } from './pages/admin/GalleryManager'
 
 export type ImageAsset = {
   url: string
@@ -20,40 +34,75 @@ export type ImageAsset = {
   sizes?: Record<string, { url: string; width: number; height: number }>
 }
 
-export type Home = { heroHeadline?: string; heroCTA?: string; heroImage?: ImageAsset; tagline?: string; subhead?: string }
+export type Home = {
+  hero: { headline?: string; cta?: string; image?: ImageAsset; tagline?: string; subhead?: string }
+  visualStories: { title?: string; description?: any; cta?: string; carousel?: { id: string; title?: string; category?: string; image: ImageAsset }[] }
+  trustedBy: { name: string; logo?: ImageAsset }[]
+}
+
 export type Photo = { id: string; title?: string; category?: string; image: ImageAsset }
 export type Project = { id: string; slug: string; title: string; category?: string; client?: string; location?: string; heroImage?: ImageAsset; gallery?: ImageAsset[]; story?: string; credits?: string[] }
-export type AboutData = { portrait: ImageAsset; bio: string }
+
+export type AboutData = {
+  hero: { title?: string; subtitle?: string; image?: ImageAsset }
+  intro: { title?: string; content?: any; philosophyTitle?: string; philosophyContent?: string; philosophyQuote?: string }
+  features: { title?: string; description?: string; image?: ImageAsset }[]
+  stats: { label: string; value: string }[]
+  founder: { portrait?: ImageAsset; bio?: string }
+}
+
+export type ServicesPageData = {
+  hero: { title?: string; subtitle?: string; image?: ImageAsset }
+  categories: { title: string; description: string; image: ImageAsset; items?: string[] }[]
+  process: { step: string; title: string; description: string }[]
+}
+
 export type Service = { id: string; title: string; description?: string; price?: string }
 export type Testimonial = { id: string; author?: string; quote: string }
-
-import Footer from './components/Footer'
-import SocialWidgets from './components/SocialWidgets'
 
 export default function App() {
   const [home, setHome] = useState<Home | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [photos, setPhotos] = useState<Photo[]>([])
   const [about, setAbout] = useState<AboutData | null>(null)
+  const [servicesPage, setServicesPage] = useState<ServicesPageData | null>(null)
   const [services, setServices] = useState<Service[]>([])
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
-    Promise.all([getHome(), getProjects(), getPhotos(), getAbout(), getServices(), getTestimonials()])
-      .then(([h, pr, p, a, s, t]) => {
+    console.log('App: Fetching data...');
+    
+    const timer = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Data loading timed out - forcing render');
+        setLoading(false);
+      }
+    }, 5000);
+
+    Promise.all([getHome(), getProjects(), getPhotos(), getAbout(), getServicesPage(), getServices(), getTestimonials()])
+      .then(([h, pr, p, a, sp, s, t]) => {
         if (!mounted) return
+        console.log('App: Data fetched successfully', { h, pr, p, a });
         setHome(h)
         setProjects(pr)
         setPhotos(p)
         setAbout(a)
+        setServicesPage(sp)
         setServices(s)
         setTestimonials(t)
       })
-      .finally(() => mounted && setLoading(false))
+      .catch(err => {
+        console.error('App: Data fetch failed', err);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false)
+        clearTimeout(timer)
+      })
     return () => {
       mounted = false
+      clearTimeout(timer)
     }
   }, [])
 
@@ -72,20 +121,41 @@ export default function App() {
   }
 
   return (
-    <div className="page-shell">
-      <Navigation />
-      <Layout>
-        <Route path="/" element={<HomePage home={home} photos={photos} />} />
-        <Route path="/work" element={<WorkPage projects={projects} />} />
-        <Route path="/gallery" element={<GalleryPage photos={photos} />} />
-        <Route path="/work/:slug" element={<ProjectPage />} />
-        <Route path="/about" element={<AboutPage about={about} testimonials={testimonials} />} />
-        <Route path="/services" element={<ServicesPage services={services} />} />
-        <Route path="/contact" element={<ContactPage onSubmit={onSubmitContact} />} />
-        <Route path="*" element={<NotFoundPage />} />
-      </Layout>
-      <Footer />
-      <SocialWidgets />
-    </div>
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+
+        <Route path="/admin" element={
+          <ProtectedRoute>
+            <AdminLayout />
+          </ProtectedRoute>
+        }>
+          <Route index element={<DashboardHome />} />
+          <Route path="projects" element={<ProjectsManager />} />
+          <Route path="gallery" element={<GalleryManager />} />
+          <Route path="pages/home" element={<HomePageEditor />} />
+          <Route path="pages/about" element={<AboutPageEditor />} />
+          <Route path="pages/services" element={<ServicesPageEditor />} />
+        </Route>
+
+        <Route path="/*" element={
+          <div className="page-shell">
+            <Navigation />
+            <Layout>
+              <Route index element={<HomePage home={home} photos={photos} />} />
+              <Route path="work" element={<WorkPage projects={projects} />} />
+              <Route path="/gallery" element={<GalleryPage photos={photos} />} />
+              <Route path="/work/:slug" element={<ProjectPage />} />
+              <Route path="/about" element={<AboutPage about={about} testimonials={testimonials} />} />
+              <Route path="/services" element={<ServicesPage page={servicesPage} services={services} />} />
+              <Route path="/contact" element={<ContactPage onSubmit={onSubmitContact} />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Layout>
+            <Footer />
+            <SocialWidgets />
+          </div>
+        } />
+      </Routes>
+    </AuthProvider>
   )
 }

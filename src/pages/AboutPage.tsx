@@ -9,6 +9,8 @@ type Props = { about: AboutData | null; testimonials?: Testimonial[] }
 export default function AboutPage({ about, testimonials = [] }: Props) {
   if (!about) return null
   
+  const { hero, intro, features, stats, founder } = about
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -21,9 +23,10 @@ export default function AboutPage({ about, testimonials = [] }: Props) {
       <section style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', color: 'white', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, opacity: 0.4 }}>
            <img 
-             src="https://images.unsplash.com/photo-1542038784424-48ed2d46wd93?auto=format&fit=crop&q=80&w=2000" 
-             alt="Studio" 
+             src={hero?.image?.url || 'https://images.unsplash.com/photo-1554048612-387768052bf7?auto=format&fit=crop&q=80&w=1600'} 
+             alt={hero?.title || 'Studio'} 
              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+             onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1554048612-387768052bf7?auto=format&fit=crop&q=80&w=1600' }}
            />
         </div>
         <div className="container" style={{ position: 'relative', textAlign: 'center', zIndex: 10 }}>
@@ -34,7 +37,7 @@ export default function AboutPage({ about, testimonials = [] }: Props) {
             className="serif" 
             style={{ fontSize: 'clamp(48px, 6vw, 96px)', margin: 0 }}
           >
-            Our Story
+            {hero?.title || 'Our Story'}
           </motion.h1>
           <motion.div 
             initial={{ scaleX: 0 }}
@@ -48,7 +51,7 @@ export default function AboutPage({ about, testimonials = [] }: Props) {
             transition={{ duration: 0.8, delay: 0.3 }}
             style={{ fontSize: 20, maxWidth: 600, margin: '0 auto', opacity: 0.9 }}
           >
-            We are a purpose-driven creative studio blending artistic vision with technical excellence.
+            {hero?.subtitle || 'We are a purpose-driven creative studio blending artistic vision with technical excellence.'}
           </motion.p>
         </div>
       </section>
@@ -58,20 +61,24 @@ export default function AboutPage({ about, testimonials = [] }: Props) {
         <div className="container">
           <div className="grid-2">
             <div>
-              <h2 className="serif" style={{ fontSize: 40, marginBottom: 32 }}>Who We Are</h2>
-              <p style={{ lineHeight: 1.8, color: '#666', fontSize: 18, marginBottom: 32 }}>
-                We are a full-service creative media house with deep expertise in photography, videography, aerial drone footage, web design, and animation. 
-              </p>
-              <p style={{ lineHeight: 1.8, color: '#666', fontSize: 18 }}>
-                Our core strength lies in combining high-end technical skills with rich storytelling — delivering media content that not only looks beautiful, but resonates emotionally.
-              </p>
+              <h2 className="serif" style={{ fontSize: 40, marginBottom: 32 }}>{intro?.title || 'Who We Are'}</h2>
+              <div style={{ lineHeight: 1.8, color: '#666', fontSize: 18, marginBottom: 32 }}>
+                {intro?.content ? (
+                  <p>{intro.content}</p>
+                ) : (
+                  <>
+                    <p style={{ marginBottom: 32 }}>We are a full-service creative media house with deep expertise in photography, videography, aerial drone footage, web design, and animation.</p>
+                    <p>Our core strength lies in combining high-end technical skills with rich storytelling — delivering media content that not only looks beautiful, but resonates emotionally.</p>
+                  </>
+                )}
+              </div>
             </div>
             <div style={{ background: '#f8f8f8', padding: 48 }}>
-              <h3 className="serif" style={{ fontSize: 32, marginBottom: 24 }}>Our Philosophy</h3>
+              <h3 className="serif" style={{ fontSize: 32, marginBottom: 24 }}>{intro?.philosophyTitle || 'Our Philosophy'}</h3>
               <p style={{ lineHeight: 1.8, color: '#555', fontSize: 18, fontStyle: 'italic' }}>
-                "Every project begins with your vision. We immerse ourselves in your story, your brand, or your event — then meticulously craft visuals that reflect your identity."
+                "{intro?.philosophyContent || 'Every project begins with your vision. We immerse ourselves in your story, your brand, or your event — then meticulously craft visuals that reflect your identity.'}"
               </p>
-              <div style={{ marginTop: 32, fontWeight: 600 }}>— The Adah Team</div>
+              <div style={{ marginTop: 32, fontWeight: 600 }}>{intro?.philosophyQuote || '— The Adah Team'}</div>
             </div>
           </div>
         </div>
@@ -86,28 +93,7 @@ export default function AboutPage({ about, testimonials = [] }: Props) {
           </div>
 
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32 }}>
-            {[
-              { 
-                title: 'Creative Excellence & Professionalism', 
-                desc: 'Our team unites seasoned professionals with refined artistic sensibilities and strategic insight. We approach every project with precision, creativity, and a commitment to exceeding expectations.',
-                img: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1000'
-              },
-              { 
-                title: 'Comprehensive Production & Creative Services', 
-                desc: 'From pre-production, storyboarding, and filming, to photography, drone cinematography, graphic design, animation, web design, and web development, we handle every stage so you can focus on your vision without the typical agency stress.',
-                img: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=1000'
-              },
-              { 
-                title: 'Cutting-Edge Technology & Techniques', 
-                desc: 'We utilize top-tier camera gear, drones, editing suites, animation tools, and advanced web technologies to ensure every piece of content is cinematic, crisp, and polished to perfection.',
-                img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=1000'
-              },
-              { 
-                title: 'Impact-Driven Track Record', 
-                desc: 'We’ve collaborated with brands, corporate clients, international organizations, NGOs, development agencies, and private clients — delivering powerful visuals and digital solutions that inform, inspire, and create lasting impact.',
-                img: 'https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&q=80&w=1000'
-              }
-            ].map((item, i) => (
+            {features?.map((item, i) => (
               <motion.div 
                 key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -125,11 +111,13 @@ export default function AboutPage({ about, testimonials = [] }: Props) {
                 }}
               >
                 <div style={{ position: 'relative', aspectRatio: '16/9' }}>
-                  <img src={item.img} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  {item.image?.url && (
+                    <img src={item.image.url} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  )}
                 </div>
                 <div style={{ padding: 24 }}>
                   <h3 className="serif" style={{ fontSize: 22, marginBottom: 12, color: 'var(--accent)' }}>{item.title}</h3>
-                  <p style={{ opacity: 0.8, lineHeight: 1.7 }}>{item.desc}</p>
+                  <p style={{ opacity: 0.8, lineHeight: 1.7 }}>{item.description}</p>
                 </div>
               </motion.div>
             ))}
@@ -141,15 +129,10 @@ export default function AboutPage({ about, testimonials = [] }: Props) {
       <section className="section" style={{ background: 'var(--offwhite)', borderTop: '1px solid #eee', borderBottom: '1px solid #eee' }}>
         <div className="container">
           <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 24, textAlign: 'center' }}>
-            {[
-              { k: 'Clients', v: '60+' },
-              { k: 'Projects', v: '150+' },
-              { k: 'Deliverables', v: '300+' },
-              { k: 'Regions', v: 'Tanzania' },
-            ].map(x => (
-              <div key={x.k}>
-                <div className="serif" style={{ fontSize: 56, color: 'var(--accent)', lineHeight: 1 }}>{x.v}</div>
-                <div style={{ color: '#999', letterSpacing: '0.08em', marginTop: 16, fontSize: 14, textTransform: 'uppercase' }}>{x.k}</div>
+            {stats?.map(x => (
+              <div key={x.label}>
+                <div className="serif" style={{ fontSize: 56, color: 'var(--accent)', lineHeight: 1 }}>{x.value}</div>
+                <div style={{ color: '#999', letterSpacing: '0.08em', marginTop: 16, fontSize: 14, textTransform: 'uppercase' }}>{x.label}</div>
               </div>
             ))}
           </div>
@@ -157,7 +140,12 @@ export default function AboutPage({ about, testimonials = [] }: Props) {
       </section>
 
       {/* Founder / About Component */}
-      <About portrait={about.portrait} bio={about.bio} />
+      {founder && (
+        <About
+          portrait={founder.portrait || { url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=1000' }}
+          bio={founder.bio || 'I am a visual storyteller obsessed with the fleeting moments that define our humanity.'}
+        />
+      )}
 
       {testimonials.length > 0 && <Testimonials items={testimonials} />}
     </motion.div>

@@ -8,14 +8,28 @@ import { Link } from 'react-router-dom'
 type Props = { home: Home | null; photos: Photo[] }
 
 export default function HomePage({ home, photos }: Props) {
+  console.log('HomePage: Rendering', { home, photos });
+  const hero = home?.hero
+  const stories = home?.visualStories
+  const trustedBy = home?.trustedBy || []
+  const carousel = (stories as any)?.carousel
+  const carouselItems = Array.isArray(carousel) && carousel.length > 0
+    ? carousel.map((item: any, index: number) => ({
+        id: String(item?.id ?? index),
+        title: item?.title,
+        category: item?.category,
+        image: item?.image || { url: item?.url },
+      }))
+    : photos
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
+      initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <Hero headline={home?.heroHeadline} cta={home?.heroCTA} image={home?.heroImage} tagline={home?.tagline} sub={home?.subhead} />
+      <Hero headline={hero?.headline} cta={hero?.cta} image={hero?.image} tagline={hero?.tagline} sub={hero?.subhead} />
       
       {/* Services Teaser */}
       <section className="section responsive-padding" style={{ background: '#fff' }}>
@@ -64,6 +78,7 @@ export default function HomePage({ home, photos }: Props) {
                   src={s.img} 
                   alt={s.title}
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=800' }}
                 />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }} />
                 <div style={{ position: 'absolute', bottom: 32, left: 32, color: 'white' }}>
@@ -76,7 +91,7 @@ export default function HomePage({ home, photos }: Props) {
         </div>
       </section>
 
-      {/* Visual Stories (Dark Section) */}
+      {/* Visual Stories (Gallery Section) */}
       <section className="section responsive-padding" style={{ background: '#050505', color: 'white', overflow: 'hidden' }}>
         <div className="container" style={{ textAlign: 'center', marginBottom: 64 }}>
           <motion.h2 
@@ -99,8 +114,8 @@ export default function HomePage({ home, photos }: Props) {
           </motion.p>
         </div>
         
-        {photos.length > 0 ? (
-          <CircularGallery items={photos} />
+        {carouselItems.length > 0 ? (
+          <CircularGallery items={carouselItems} />
         ) : (
           <div style={{ textAlign: 'center', padding: 40, color: '#444' }}>Loading Gallery...</div>
         )}
@@ -110,7 +125,7 @@ export default function HomePage({ home, photos }: Props) {
         </div>
       </section>
 
-      {/* About / Stats - Crafting Legacy Redesign */}
+      {/* Legacy / Philosophy Section */}
       <section className="section responsive-padding" style={{ background: '#fff' }}>
         <div className="container">
           <div className="grid-split">
@@ -168,16 +183,20 @@ export default function HomePage({ home, photos }: Props) {
              >
                <div style={{ width: 64, height: 2, background: 'var(--accent)', marginBottom: 32 }} />
                <h2 className="serif" style={{ fontSize: 'clamp(32px, 4vw, 56px)', marginBottom: 32, lineHeight: 1.1 }}>
-                 Crafting a <br />Legacy of Light.
+                 {stories?.title || 'Crafting a Legacy of Light.'}
                </h2>
-               <p style={{ lineHeight: 1.8, color: '#666', marginBottom: 32, fontSize: 18 }}>
-                 We don't just take photos; we build narratives. Our approach combines technical precision with artistic intuition to deliver content that stands the test of time.
-               </p>
-               <p style={{ lineHeight: 1.8, color: '#666', marginBottom: 48, fontSize: 16 }}>
-                 From the first concept to the final edit, every step is deliberate, every frame is chosen with purpose. We believe in the power of visual storytelling to move hearts and shape opinions.
-               </p>
+               <div style={{ lineHeight: 1.8, color: '#666', marginBottom: 32, fontSize: 18 }}>
+                  {typeof stories?.description === 'string' && stories.description.trim().length > 0 ? (
+                    <p>{stories.description}</p>
+                  ) : (
+                    <>
+                      <p style={{ marginBottom: 32 }}>We don't just take photos; we build narratives. Our approach combines technical precision with artistic intuition to deliver content that stands the test of time.</p>
+                      <p style={{ marginBottom: 48 }}>From the first concept to the final edit, every step is deliberate, every frame is chosen with purpose. We believe in the power of visual storytelling to move hearts and shape opinions.</p>
+                    </>
+                  )}
+               </div>
                <Link to="/about" className="cta" style={{ background: 'black', color: 'white', fontSize: 14 }}>
-                 Read Our Philosophy
+                 {stories?.cta || 'Read Our Philosophy'}
                </Link>
              </motion.div>
           </div>
@@ -198,11 +217,19 @@ export default function HomePage({ home, photos }: Props) {
              >
                 {[...Array(2)].map((_, i) => (
                   <div key={i} style={{ display: 'flex', gap: 80, alignItems: 'center' }}>
-                    {['UNICEF', 'USAID', 'Vodacom', 'CRDB', 'Embassy', 'CocaCola', 'Toyota', 'Samsung'].map(logo => (
+                    {trustedBy.length > 0 ? trustedBy.map(t => (
+                       <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                         {t.logo?.url && <img src={t.logo.url} alt={t.name} style={{ height: 40, opacity: 0.8 }} />}
+                         <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'serif', color: '#222', whiteSpace: 'nowrap' }}>
+                           {t.name}
+                         </div>
+                       </div>
+                    )) : (
+                      ['UNICEF', 'USAID', 'Vodacom', 'CRDB', 'Embassy', 'CocaCola', 'Toyota', 'Samsung'].map(logo => (
                        <div key={logo} style={{ fontSize: 40, fontWeight: 700, fontFamily: 'serif', color: '#222', whiteSpace: 'nowrap' }}>
                          {logo}
                        </div>
-                    ))}
+                    )))}
                   </div>
                 ))}
              </motion.div>
@@ -217,13 +244,8 @@ export default function HomePage({ home, photos }: Props) {
       {/* CTA Banner */}
       <section className="section" style={{ background: '#F0EFE9', color: 'black', textAlign: 'center', padding: '80px 20px' }}>
         <div className="container">
-          <h2 className="serif" style={{ fontSize: 'clamp(32px, 5vw, 64px)', margin: '0 auto 24px' }}>Ready to tell your story?</h2>
-          <p style={{ maxWidth: 600, margin: '0 auto 40px', fontSize: 18, opacity: 0.9 }}>
-            Whether it's a corporate campaign or a personal milestone, let's create something extraordinary together.
-          </p>
-          <Link to="/contact" style={{ display: 'inline-block', background: 'black', color: 'white', padding: '16px 32px', textDecoration: 'none', fontSize: 14, fontWeight: 600, letterSpacing: '0.05em' }}>
-            Start a Project
-          </Link>
+          <h2 className="serif" style={{ fontSize: 48, marginBottom: 32 }}>Have a project in mind?</h2>
+          <a href="/contact" className="cta" style={{ background: 'black', color: 'white' }}>Get a Quote</a>
         </div>
       </section>
     </motion.div>

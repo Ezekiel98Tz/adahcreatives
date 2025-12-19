@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 h1, h2, h3 { font-weight: 400; letter-spacing: 0.02em }
 
 .section { width: 100%; padding: 72px 0 }

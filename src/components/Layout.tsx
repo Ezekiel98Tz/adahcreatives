@@ -6,10 +6,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        {children}
-      </Routes>
-    </AnimatePresence>
+    <Routes location={location} key={location.pathname}>
+      {children}
+    </Routes>
   )
 }

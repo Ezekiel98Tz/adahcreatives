@@ -34,8 +34,6 @@ export default function About({ portrait, bio }: Props) {
         >
           <h2 className="serif" style={{ fontSize: 'clamp(28px, 5vw, 48px)', marginTop: 0, marginBottom: 32 }}>Capturing Life's<br />Fleeting Moments</h2>
           <p style={{ lineHeight: 1.9, fontSize: 18, color: '#444', whiteSpace: 'pre-wrap' }}>{bio}</p>
-          
-          <img src="https://upload.wikimedia.org/wikipedia/commons/e/e4/Signature_sample.svg" alt="Signature" style={{ height: 48, marginTop: 32, opacity: 0.6 }} />
         </motion.div>
       </div>
       <style>{`

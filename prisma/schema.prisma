@@ -1,0 +1,46 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  description String?
+  category    String   // e.g., "Web Design", "Photography"
+  imageUrl    String?  // Main hero image
+  createdAt   DateTime @default(now())
+}
+
+model Service {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  icon        String?  // Optional icon name or url
+}
+
+model Photo {
+  id       Int    @id @default(autoincrement())
+  url      String
+  caption  String?
+  category String // e.g., "Nature", "Urban"
+}
+
+model Page {
+  id        Int      @id @default(autoincrement())
+  slug      String   @unique // "home", "about"
+  data      String   // JSON string containing the page content
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id       Int      @id @default(autoincrement())
+  email    String   @unique
+  password String
+  name     String?
+}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { getProjectBySlug } from '../lib/payloadClient'
+import { getProjectBySlug } from '../lib/api'
 import Lightbox from '../components/Lightbox'
 
 type Project = {
