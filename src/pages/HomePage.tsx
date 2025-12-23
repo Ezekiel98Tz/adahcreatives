@@ -10,6 +10,8 @@ type Props = { home: Home | null; photos: Photo[] }
 export default function HomePage({ home, photos }: Props) {
   console.log('HomePage: Rendering', { home, photos });
   const hero = home?.hero
+  const servicesTeaser = home?.servicesTeaser
+  const visualGallery = home?.visualGallery
   const stories = home?.visualStories
   const trustedBy = home?.trustedBy || []
   const carousel = (stories as any)?.carousel
@@ -43,7 +45,7 @@ export default function HomePage({ home, photos }: Props) {
                  className="serif" 
                  style={{ fontSize: 'clamp(40px, 5vw, 64px)', margin: 0, lineHeight: 1.1 }}
                >
-                 We Craft<br /><span style={{ color: 'var(--muted)' }}>Timeless Media.</span>
+                 {servicesTeaser?.titleLine1 || 'We Craft'}<br /><span style={{ color: 'var(--muted)' }}>{servicesTeaser?.titleLine2 || 'Timeless Media.'}</span>
                </motion.h2>
              </div>
              <div>
@@ -53,19 +55,26 @@ export default function HomePage({ home, photos }: Props) {
                  viewport={{ once: true }}
                  style={{ color: '#666', lineHeight: 1.8, fontSize: 18, maxWidth: 500 }}
                >
-                 From high-end photography to cinematic video production, we help brands and individuals tell stories that resonate and endure.
+                 {servicesTeaser?.description || 'From high-end photography to cinematic video production, we help brands and individuals tell stories that resonate and endure.'}
                </motion.p>
              </div>
           </div>
 
           <div className="grid-3">
-            {[
-              { title: 'Photography', img: 'https://images.unsplash.com/photo-1554048612-387768052bf7?auto=format&fit=crop&q=80&w=800' },
-              { title: 'Cinematography', img: 'https://images.unsplash.com/photo-1579632652768-6cb9dcf85912?auto=format&fit=crop&q=80&w=800' },
-              { title: 'Creative Strategy', img: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=800' }
-            ].map((s, i) => (
+            {(Array.isArray(servicesTeaser?.cards) && servicesTeaser.cards.length > 0
+              ? servicesTeaser.cards.map((c: any, i: number) => ({
+                  title: c?.title,
+                  img: c?.image?.url,
+                  id: String(i),
+                }))
+              : [
+                  { id: '0', title: 'Photography', img: 'https://images.unsplash.com/photo-1554048612-387768052bf7?auto=format&fit=crop&q=80&w=800' },
+                  { id: '1', title: 'Cinematography', img: 'https://images.unsplash.com/photo-1579632652768-6cb9dcf85912?auto=format&fit=crop&q=80&w=800' },
+                  { id: '2', title: 'Creative Strategy', img: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=800' },
+                ]
+            ).map((s: any, i: number) => (
               <motion.div 
-                key={i}
+                key={s.id || i}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -80,11 +89,11 @@ export default function HomePage({ home, photos }: Props) {
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   onError={(e) => { e.currentTarget.src = 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=800' }}
                 />
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }} />
-                <div style={{ position: 'absolute', bottom: 32, left: 32, color: 'white' }}>
+               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)' }} />
+               <div style={{ position: 'absolute', bottom: 32, left: 32, color: 'white' }}>
                   <h3 className="serif" style={{ fontSize: 32, margin: 0 }}>{s.title}</h3>
                   <div style={{ marginTop: 8, height: 2, width: 40, background: 'var(--accent)' }} />
-                </div>
+               </div>
               </motion.div>
             ))}
           </div>
@@ -101,7 +110,7 @@ export default function HomePage({ home, photos }: Props) {
             className="serif" 
             style={{ fontSize: 'clamp(32px, 4vw, 56px)', margin: 0 }}
           >
-            Visual Stories
+            {visualGallery?.title || 'Visual Stories'}
           </motion.h2>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -110,7 +119,7 @@ export default function HomePage({ home, photos }: Props) {
             transition={{ delay: 0.2 }}
             style={{ color: '#888', marginTop: 16, maxWidth: 600, marginInline: 'auto' }}
           >
-            A curated selection of our most impactful moments captured through the lens.
+            {visualGallery?.subtitle || 'A curated selection of our most impactful moments captured through the lens.'}
           </motion.p>
         </div>
         
@@ -121,7 +130,9 @@ export default function HomePage({ home, photos }: Props) {
         )}
         
         <div style={{ textAlign: 'center', marginTop: 80 }}>
-          <Link to="/gallery" className="cta" style={{ background: 'white', color: 'black' }}>View Full Gallery</Link>
+          <Link to="/gallery" className="cta" style={{ background: 'white', color: 'black' }}>
+            {visualGallery?.ctaText || 'View Full Gallery'}
+          </Link>
         </div>
       </section>
 
@@ -138,7 +149,7 @@ export default function HomePage({ home, photos }: Props) {
              >
                <div style={{ position: 'relative', height: 600, overflow: 'hidden' }}>
                  <img 
-                   src="https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=1000" 
+                   src={stories?.image?.url || "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=1000"} 
                    alt="Photographer at work" 
                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                  />
@@ -213,23 +224,68 @@ export default function HomePage({ home, photos }: Props) {
              <motion.div 
                animate={{ x: ['0%', '-50%'] }}
                transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-               style={{ display: 'flex', gap: 80, minWidth: '200%' }}
+               style={{ display: 'flex', minWidth: '200%', willChange: 'transform' }}
              >
                 {[...Array(2)].map((_, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 80, alignItems: 'center' }}>
-                    {trustedBy.length > 0 ? trustedBy.map(t => (
-                       <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                         {t.logo?.url && <img src={t.logo.url} alt={t.name} style={{ height: 40, opacity: 0.8 }} />}
-                         <div style={{ fontSize: 40, fontWeight: 700, fontFamily: 'serif', color: '#222', whiteSpace: 'nowrap' }}>
-                           {t.name}
-                         </div>
-                       </div>
-                    )) : (
-                      ['UNICEF', 'USAID', 'Vodacom', 'CRDB', 'Embassy', 'CocaCola', 'Toyota', 'Samsung'].map(logo => (
-                       <div key={logo} style={{ fontSize: 40, fontWeight: 700, fontFamily: 'serif', color: '#222', whiteSpace: 'nowrap' }}>
-                         {logo}
-                       </div>
-                    )))}
+                  <div key={i} style={{ display: 'flex', gap: 48, alignItems: 'center', flex: '0 0 auto', paddingRight: 48 }}>
+                    {trustedBy.length > 0 ? trustedBy.map((t: any, index: number) => {
+                      const name = String(t?.name || '').trim()
+                      const logoUrl = t?.logo?.url
+                      return (
+                        <div
+                          key={`${i}-${t?.id || name || index}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flex: '0 0 auto',
+                            height: 64,
+                            padding: '10px 24px',
+                            borderRadius: 9999,
+                            background: 'rgba(255,255,255,0.35)',
+                            border: '1px solid rgba(0,0,0,0.06)',
+                            backdropFilter: 'blur(6px)',
+                          }}
+                        >
+                          {logoUrl ? (
+                            <img
+                              src={logoUrl}
+                              alt={name}
+                              style={{ height: 44, width: 'auto', maxWidth: 180, objectFit: 'contain', opacity: 0.9, display: 'block' }}
+                            />
+                          ) : (
+                            <div style={{ fontSize: 28, fontWeight: 700, fontFamily: 'serif', color: '#222', whiteSpace: 'nowrap', lineHeight: 1 }}>
+                              {name}
+                            </div>
+                          )}
+                        </div>
+                      )
+                    }) : (
+                      ['UNICEF', 'USAID', 'Vodacom', 'CRDB', 'Embassy', 'CocaCola', 'Toyota', 'Samsung'].map((logo, index) => (
+                        <div
+                          key={`${i}-${logo}-${index}`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flex: '0 0 auto',
+                            height: 64,
+                            padding: '10px 24px',
+                            borderRadius: 9999,
+                            background: 'rgba(255,255,255,0.35)',
+                            border: '1px solid rgba(0,0,0,0.06)',
+                            fontSize: 28,
+                            fontWeight: 700,
+                            fontFamily: 'serif',
+                            color: '#222',
+                            whiteSpace: 'nowrap',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {logo}
+                        </div>
+                      ))
+                    )}
                   </div>
                 ))}
              </motion.div>

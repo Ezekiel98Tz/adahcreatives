@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
-import { getHome, getPhotos, getAbout, getServices, getServicesPage, getTestimonials, getProjects, submitBooking } from './lib/api'
+import { getHome, getPhotos, getAbout, getServices, getServicesPage, getTestimonials, getProjects, submitContact } from './lib/api'
 import Layout from './components/Layout'
 import Navigation from './components/Navigation'
 import HomePage from './pages/HomePage'
@@ -36,12 +36,14 @@ export type ImageAsset = {
 
 export type Home = {
   hero: { headline?: string; cta?: string; image?: ImageAsset; tagline?: string; subhead?: string }
-  visualStories: { title?: string; description?: any; cta?: string; carousel?: { id: string; title?: string; category?: string; image: ImageAsset }[] }
+  servicesTeaser?: { titleLine1?: string; titleLine2?: string; description?: string; cards?: { title?: string; image?: ImageAsset }[] }
+  visualGallery?: { title?: string; subtitle?: string; ctaText?: string }
+  visualStories: { title?: string; description?: any; cta?: string; image?: ImageAsset; carousel?: { id: string; title?: string; category?: string; image: ImageAsset }[] }
   trustedBy: { name: string; logo?: ImageAsset }[]
 }
 
 export type Photo = { id: string; title?: string; category?: string; image: ImageAsset }
-export type Project = { id: string; slug: string; title: string; category?: string; client?: string; location?: string; heroImage?: ImageAsset; gallery?: ImageAsset[]; story?: string; credits?: string[] }
+export type Project = { id: string; slug?: string | null; title: string; category?: string; client?: string; location?: string; heroImage?: ImageAsset; gallery?: ImageAsset[]; story?: string; credits?: string[] }
 
 export type AboutData = {
   hero: { title?: string; subtitle?: string; image?: ImageAsset }
@@ -58,7 +60,7 @@ export type ServicesPageData = {
 }
 
 export type Service = { id: string; title: string; description?: string; price?: string }
-export type Testimonial = { id: string; author?: string; quote: string }
+export type Testimonial = { id: string; author?: string; quote: string; image?: string }
 
 export default function App() {
   const [home, setHome] = useState<Home | null>(null)
@@ -73,18 +75,33 @@ export default function App() {
   useEffect(() => {
     let mounted = true
     console.log('App: Fetching data...');
+    let initialFetchCompleted = false
     
     const timer = setTimeout(() => {
-      if (mounted && loading) {
+      if (mounted && !initialFetchCompleted) {
         console.warn('Data loading timed out - forcing render');
         setLoading(false);
       }
     }, 5000);
 
-    Promise.all([getHome(), getProjects(), getPhotos(), getAbout(), getServicesPage(), getServices(), getTestimonials()])
-      .then(([h, pr, p, a, sp, s, t]) => {
-        if (!mounted) return
-        console.log('App: Data fetched successfully', { h, pr, p, a });
+    let requestId = 0
+
+    const fetchAll = async (opts?: { showLoader?: boolean }) => {
+      const current = ++requestId
+      const showLoader = opts?.showLoader !== false
+      if (showLoader && mounted) setLoading(true)
+      try {
+        const [h, pr, p, a, sp, s, t] = await Promise.all([
+          getHome(),
+          getProjects(),
+          getPhotos(),
+          getAbout(),
+          getServicesPage(),
+          getServices(),
+          getTestimonials(),
+        ])
+        if (!mounted || current !== requestId) return
+        console.log('App: Data fetched successfully', { h, pr, p, a })
         setHome(h)
         setProjects(pr)
         setPhotos(p)
@@ -92,22 +109,36 @@ export default function App() {
         setServicesPage(sp)
         setServices(s)
         setTestimonials(t)
-      })
-      .catch(err => {
-        console.error('App: Data fetch failed', err);
-      })
-      .finally(() => {
-        if (mounted) setLoading(false)
-        clearTimeout(timer)
-      })
+      } catch (err) {
+        console.error('App: Data fetch failed', err)
+      } finally {
+        if (opts?.showLoader !== false) initialFetchCompleted = true
+        if (mounted && showLoader) setLoading(false)
+      }
+    }
+
+    fetchAll({ showLoader: true })
+    
+    const onContentUpdated = (event: any) => {
+      const slug = event?.detail?.slug
+      console.log('App: content-updated', slug)
+      fetchAll({ showLoader: false })
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('content-updated', onContentUpdated as any)
+    }
     return () => {
       mounted = false
       clearTimeout(timer)
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('content-updated', onContentUpdated as any)
+      }
     }
   }, [])
 
   const onSubmitContact = async (data: { name: string; email: string; message?: string }) => {
-    await submitBooking(data)
+    await submitContact({ name: data.name, email: data.email, message: data.message || '' })
   }
 
   const contentReady = useMemo(() => !loading, [loading])
@@ -145,7 +176,7 @@ export default function App() {
               <Route index element={<HomePage home={home} photos={photos} />} />
               <Route path="work" element={<WorkPage projects={projects} />} />
               <Route path="/gallery" element={<GalleryPage photos={photos} />} />
-              <Route path="/work/:slug" element={<ProjectPage />} />
+              <Route path="work/:id" element={<ProjectPage projects={projects} />} />
               <Route path="/about" element={<AboutPage about={about} testimonials={testimonials} />} />
               <Route path="/services" element={<ServicesPage page={servicesPage} services={services} />} />
               <Route path="/contact" element={<ContactPage onSubmit={onSubmitContact} />} />

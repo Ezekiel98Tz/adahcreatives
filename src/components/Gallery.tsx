@@ -36,7 +36,7 @@ export default function Gallery({ photos }: Props) {
             >
               <div style={{ overflow: 'hidden', background: '#eee' }}>
                 <motion.img
-                  whileHover={{ scale: 1.05, filter: 'grayscale(0%)' }}
+                  whileHover={{ scale: 1.05 }}
                   transition={{ duration: 0.6, ease: 'easeOut' }}
                   src={optimize(p.image.url, { w: 800 })}
                   srcSet={srcSetFromImage(p.image)}
@@ -72,7 +72,7 @@ export default function Gallery({ photos }: Props) {
         .gallery img { 
           width: 100%; 
           display: block; 
-          filter: grayscale(100%); 
+          filter: none; 
           transform: scale(1); 
         }
         

@@ -28,8 +28,8 @@ h1, h2, h3 { font-weight: 400; letter-spacing: 0.02em }
 
 .gallery { column-count: 3; column-gap: 16px }
 .gallery figure { position: relative; break-inside: avoid; margin: 0 0 16px 0; cursor: zoom-in }
-.gallery img { width: 100%; display: block; filter: grayscale(8%); transform: scale(1); transition: transform 300ms ease, filter 300ms ease }
-.gallery figure:hover img { transform: scale(1.02); filter: grayscale(0%) }
+.gallery img { width: 100%; display: block; filter: none; transform: scale(1); transition: transform 300ms ease }
+.gallery figure:hover img { transform: scale(1.02); }
 .gallery figcaption { position: absolute; left: 12px; bottom: 12px; color: white; letter-spacing: 0.08em; font-size: 12px; opacity: 0; transition: opacity 200ms ease }
 .gallery figure:hover figcaption { opacity: 1 }
 

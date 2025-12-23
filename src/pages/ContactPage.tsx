@@ -7,20 +7,27 @@ export default function ContactPage({ onSubmit }: Props) {
   const [formState, setFormState] = useState({ name: '', email: '', message: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSent, setIsSent] = useState(false)
+  const [error, setError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setError('')
     setIsSubmitting(true)
-    await onSubmit(formState)
-    setIsSubmitting(false)
-    setIsSent(true)
+    try {
+      await onSubmit(formState)
+      setIsSent(true)
+    } catch (e: any) {
+      setError(e?.message || 'Failed to send message')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const contactCards = [
     { 
       title: 'Email', 
-      value: 'hello@adahcreatives.com', 
-      href: 'mailto:hello@adahcreatives.com',
+      value: 'info@adahcreatives.co.tz', 
+      href: 'mailto:info@adahcreatives.co.tz',
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -143,8 +150,8 @@ export default function ContactPage({ onSubmit }: Props) {
                 <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 24 }}>Follow Us</div>
                 <div style={{ display: 'flex', gap: 24 }}>
                   <a href="https://www.instagram.com/adahcreatives/?hl=en" target="_blank" rel="noopener noreferrer" style={{ color: 'black', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: 2 }}>Instagram</a>
-                  <a href="#" style={{ color: 'black', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: 2 }}>LinkedIn</a>
-                  <a href="#" style={{ color: 'black', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: 2 }}>WhatsApp</a>
+                  <a href="https://www.linkedin.com/company/adah-creatives/" target="_blank" rel="noopener noreferrer" style={{ color: 'black', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: 2 }}>LinkedIn</a>
+                  <a href="https://wa.me/255652493048" target="_blank" rel="noopener noreferrer" style={{ color: 'black', fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.05em', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: 2 }}>WhatsApp</a>
                 </div>
               </div>
             </div>
@@ -165,6 +172,11 @@ export default function ContactPage({ onSubmit }: Props) {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} style={{ display: 'grid', gap: 32 }}>
+                  {error && (
+                    <div style={{ background: '#fff', border: '1px solid #f3c0c0', color: '#a61b1b', padding: '14px 16px', fontSize: 14 }}>
+                      {error}
+                    </div>
+                  )}
                   <div>
                     <label style={{ display: 'block', marginBottom: 12, fontSize: 14, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Name</label>
                     <input 

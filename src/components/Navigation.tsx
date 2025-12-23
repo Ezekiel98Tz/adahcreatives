@@ -42,8 +42,13 @@ export default function Navigation() {
           color: 'white',
         }}
       >
-        <Link to="/" className="serif" style={{ fontSize: 24, textDecoration: 'none', color: 'white', fontWeight: 600 }}>
-          ADAH.
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'white' }}>
+          <img
+            src="/images/logo.png"
+            srcSet="/images/logo.png 1x, /images/logo@2x.png 2x"
+            alt="Adah Creatives"
+            style={{ height: scrolled ? 42 : 58, width: 'auto', display: 'block' }}
+          />
         </Link>
 
         {/* Desktop */}

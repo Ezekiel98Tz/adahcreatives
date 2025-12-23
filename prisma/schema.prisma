@@ -10,7 +10,7 @@ datasource db {
 model Project {
   id          Int      @id @default(autoincrement())
   title       String
-  slug        String   @unique
+  slug        String?  @unique
   description String?
   category    String   // e.g., "Web Design", "Photography"
   imageUrl    String?  // Main hero image

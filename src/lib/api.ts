@@ -1,4 +1,105 @@
-const API_URL = 'http://localhost:3000/api';
+const VITE_API_URL = String(import.meta.env.VITE_API_URL || '').trim();
+const VITE_PAYLOAD_URL = String(import.meta.env.VITE_PAYLOAD_URL || '').trim();
+const API_URL_FALLBACK =
+  VITE_API_URL ||
+  (VITE_PAYLOAD_URL ? `${VITE_PAYLOAD_URL.replace(/\/$/, '')}/api` : '') ||
+  'http://localhost:3000/api';
+
+function getApiUrl() {
+  const raw = API_URL_FALLBACK;
+  try {
+    const parsed = new URL(raw);
+    const isLoopback = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+    const windowHost = typeof window !== 'undefined' ? window.location.hostname : '';
+    const useWindowHost =
+      isLoopback &&
+      windowHost &&
+      windowHost !== 'localhost' &&
+      windowHost !== '127.0.0.1';
+    if (!useWindowHost) return raw;
+    parsed.hostname = windowHost;
+    return parsed.toString().replace(/\/$/, '');
+  } catch {
+    return raw;
+  }
+}
+
+function getApiOrigin() {
+  try {
+    const parsed = new URL(getApiUrl());
+    const isLoopback = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+    const windowHost = typeof window !== 'undefined' ? window.location.hostname : '';
+    const useWindowHost =
+      isLoopback &&
+      windowHost &&
+      windowHost !== 'localhost' &&
+      windowHost !== '127.0.0.1';
+    const host = useWindowHost ? windowHost : parsed.hostname;
+    const portPart = parsed.port ? `:${parsed.port}` : '';
+    return `${parsed.protocol}//${host}${portPart}`;
+  } catch {
+    return '';
+  }
+}
+
+function normalizeMediaUrl(value: any) {
+  const raw = typeof value === 'string' ? value : value == null ? '' : String(value);
+  const url = raw.trim();
+  if (!url) return '';
+  if (/^data:/i.test(url)) return url;
+
+  const origin = getApiOrigin();
+  if (!origin) return url;
+
+  if (/^https?:\/\//i.test(url)) {
+    try {
+      const parsed = new URL(url);
+      const isLoopback = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+      const preferred = new URL(origin);
+      const shouldRewrite =
+        isLoopback &&
+        (preferred.hostname !== 'localhost' && preferred.hostname !== '127.0.0.1') &&
+        preferred.port === parsed.port &&
+        preferred.protocol === parsed.protocol;
+      if (!shouldRewrite) return url;
+      return `${origin}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    } catch {
+      return url;
+    }
+  }
+
+  if (url.startsWith('/uploads/')) return `${origin}${url}`;
+  if (url.startsWith('uploads/')) return `${origin}/${url}`;
+  if (url.startsWith('/')) return `${origin}${url}`;
+  return `${origin}/uploads/${url}`;
+}
+
+async function fetchJson(url: string, init?: RequestInit) {
+  const response = await fetch(url, { cache: 'no-store', ...(init || {}) });
+  return { response, json: await response.json().catch(() => ({})) };
+}
+
+function notifyContentUpdated(slug: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.dispatchEvent(new CustomEvent('content-updated', { detail: { slug } }));
+  } catch {}
+}
+
+async function readErrorMessage(response: Response) {
+  const text = await response.text().catch(() => '');
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && typeof parsed === 'object' && 'error' in parsed) {
+      const base = String((parsed as any).error || '');
+      const missing = (parsed as any).missing;
+      const missingList = Array.isArray(missing) ? missing.map((m) => String(m || '').trim()).filter(Boolean) : [];
+      if (missingList.length === 0) return base;
+      return `${base} (missing: ${missingList.join(', ')})`;
+    }
+  } catch {}
+  return text || `Request failed (${response.status})`;
+}
 
 // --- MOCK DATA ---
 const MOCK_HOME = {
@@ -9,10 +110,21 @@ const MOCK_HOME = {
     subhead: 'We are a purpose-driven, luxury creative studio that blends artistic vision, technical excellence, and powerful storytelling.',
     image: { url: 'https://images.unsplash.com/photo-1492633423870-43d1cd2775eb?q=80&w=2560&auto=format&fit=crop' }
   },
+  servicesTeaser: {
+    titleLine1: 'We Craft',
+    titleLine2: 'Timeless Media.',
+    description: 'From high-end photography to cinematic video production, we help brands and individuals tell stories that resonate and endure.',
+    cards: [
+      { title: 'Photography', image: { url: 'https://images.unsplash.com/photo-1554048612-387768052bf7?auto=format&fit=crop&q=80&w=800' } },
+      { title: 'Cinematography', image: { url: 'https://images.unsplash.com/photo-1579632652768-6cb9dcf85912?auto=format&fit=crop&q=80&w=800' } },
+      { title: 'Creative Strategy', image: { url: 'https://images.unsplash.com/photo-1542744173-8e7e53415bb0?auto=format&fit=crop&q=80&w=800' } },
+    ],
+  },
   visualStories: {
     title: 'Crafting a Legacy of Light.',
     description: 'We don\'t just take photos; we build narratives. Our approach combines technical precision with artistic intuition.',
     cta: 'Read Our Philosophy',
+    image: { url: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=1000' },
     carousel: []
   },
   trustedBy: [
@@ -116,10 +228,42 @@ const MOCK_SERVICES_PAGE = {
 };
 
 const MOCK_TESTIMONIALS = [
-  { id: '1', author: 'Advocacy Officer, AAN', quote: 'Their professionalism and creativity make them a valuable partner. Their work contributed significantly to our success.' },
-  { id: '2', author: 'HR, Institutional Client', quote: 'Their attention to detail and dedication delivered an excellent result. We highly recommend them.' },
-  { id: '3', author: 'Executive Assistant to CEO, Corporate Client', quote: 'Working with this team was a breath of fresh air. They brought innovative ideas and exceeded our expectations.' },
-  { id: '4', author: 'Entrepreneur & Digital Marketing Expert', quote: 'They deliver outstanding service — creative, reliable and committed.' }
+  {
+    id: '1',
+    author: 'Haingo Rakotomalala - ADVOCACY OFFICER (AAN)',
+    quote: 'We have been consistently impressed with the exceptional services provided by Adah creatives. Their professionalism have made them a valuable partner for the AAN Organization. The team always goes above and beyond to deliver outstanding results, and their expertise has greatly contributed to our success. We highly recommend Adah creatives for their top-notch services.',
+    image: '/images/client-stories/Haingo-Rakotomalala.jpg',
+  },
+  {
+    id: '2',
+    author: 'Mr Felix - HR (AGAKHAN UNIVERSITY TANZANIA)',
+    quote: "Our experience with Adah creatives has been nothing short of excellent. They have consistently delivered outstanding results for us. The team's creativity, attention to detail, and commitment to customer satisfaction are truly commendable.",
+    image: '/images/client-stories/Mr-Felix.jpg',
+  },
+  {
+    id: '3',
+    author: 'Ikponwosa Ero - Executive officer (AAN)',
+    quote: 'Outstanding service, highly recommend!',
+    image: '/images/client-stories/Ikponwosa-Ero.jpg',
+  },
+  {
+    id: '4',
+    author: 'Happiness Daudi - COMMUNICATION SPECIALIST',
+    quote: 'Working with Adah Creatives is a breath of fresh air. They bring innovative ideas to the table while maintaining a strong sense of reliability and commitment. Their ability to adapt and exceed our creative needs is truly impressive. Chears!!!',
+    image: '/images/client-stories/Happiness-Daudi.jpg',
+  },
+  {
+    id: '5',
+    author: 'Lulu Lwavu - EXECUTIVE ASSISTANT TO CEO (CITI BANK)',
+    quote: 'Working with you was an absolute pleasure! Your attention to detail and creative approach to our project was remarkable, Job well done.',
+    image: '/images/client-stories/Lulu-Lwavu.jpg',
+  },
+  {
+    id: '6',
+    author: 'Ian Metili - ENTERPRENEUR / DIGITAL MARKET EXPERT',
+    quote: 'Mhh! You guys are good, you are the best!',
+    image: '/images/client-stories/Ian Metili.jpg',
+  },
 ];
 
 const MOCK_PROJECTS = [
@@ -160,35 +304,38 @@ const MOCK_PROJECTS = [
 
 export async function getHome() {
   try {
-    const res = await fetch(`${API_URL}/pages/home`);
-    if (!res.ok) throw new Error('Failed');
-    const page = await res.json();
-    return page.data;
-  } catch {
-    return MOCK_HOME;
+    const { response, json } = await fetchJson(`${getApiUrl()}/pages/home`);
+    if (!response.ok) throw new Error('Failed');
+    return (json as any).data;
+  } catch (err) {
+    if (import.meta.env.DEV) return MOCK_HOME;
+    throw err;
   }
 }
 
 export async function getAbout() {
   try {
-    const res = await fetch(`${API_URL}/pages/about`);
-    if (!res.ok) throw new Error('Failed');
-    const page = await res.json();
-    return page.data;
-  } catch {
-    return MOCK_ABOUT;
+    const { response, json } = await fetchJson(`${getApiUrl()}/pages/about`);
+    if (!response.ok) throw new Error('Failed');
+    return (json as any).data;
+  } catch (err) {
+    if (import.meta.env.DEV) return MOCK_ABOUT;
+    throw err;
   }
 }
 
 export async function updatePageData(slug: string, data: any) {
   try {
-    const response = await fetch(`${API_URL}/pages/${slug}`, {
+    const response = await fetch(`${getApiUrl()}/pages/${slug}`, {
       method: 'PUT',
       headers: getHeaders(),
+      cache: 'no-store',
       body: JSON.stringify({ data })
     });
     if (!response.ok) throw new Error('Failed to update page');
-    return await response.json();
+    const result = await response.json();
+    notifyContentUpdated(slug);
+    return result;
   } catch (error) {
     console.error(`Error updating page ${slug}:`, error);
     throw error;
@@ -196,38 +343,47 @@ export async function updatePageData(slug: string, data: any) {
 }
 
 export async function createProject(project: any) {
-  const response = await fetch(`${API_URL}/projects`, {
+  const response = await fetch(`${getApiUrl()}/projects`, {
     method: 'POST',
     headers: getHeaders(),
+    cache: 'no-store',
     body: JSON.stringify(project)
   });
-  if (!response.ok) throw new Error('Failed to create project');
-  return response.json();
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const created = await response.json();
+  notifyContentUpdated('projects');
+  return created;
 }
 
 export async function updateProject(id: number, project: any) {
-  const response = await fetch(`${API_URL}/projects/${id}`, {
+  const response = await fetch(`${getApiUrl()}/projects/${id}`, {
     method: 'PUT',
     headers: getHeaders(),
+    cache: 'no-store',
     body: JSON.stringify(project)
   });
-  if (!response.ok) throw new Error('Failed to update project');
-  return response.json();
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const updated = await response.json();
+  notifyContentUpdated('projects');
+  return updated;
 }
 
 export async function deleteProject(id: number) {
-  const response = await fetch(`${API_URL}/projects/${id}`, {
+  const response = await fetch(`${getApiUrl()}/projects/${id}`, {
     method: 'DELETE',
-    headers: getHeaders()
+    headers: getHeaders(),
+    cache: 'no-store',
   });
-  if (!response.ok) throw new Error('Failed to delete project');
-  return response.json();
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const result = await response.json().catch(() => ({}));
+  notifyContentUpdated('projects');
+  return result;
 }
 
 export async function getPhotos() {
   // Try to fetch from backend, fallback to mock
   try {
-    const res = await fetch(`${API_URL}/gallery`);
+    const res = await fetch(`${getApiUrl()}/gallery`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed');
     const data = await res.json();
     if (data.length === 0) return MOCK_PHOTOS;
@@ -235,17 +391,18 @@ export async function getPhotos() {
       id: String(p.id),
       title: p.caption, // Mapping caption to title for now
       category: p.category,
-      image: { url: p.url }
+      image: { url: normalizeMediaUrl(p.url) }
     }));
-  } catch {
-    return MOCK_PHOTOS;
+  } catch (err) {
+    if (import.meta.env.DEV) return MOCK_PHOTOS;
+    throw err;
   }
 }
 
 export async function getGalleryAdmin(opts?: { category?: string }) {
-  const url = new URL(`${API_URL}/gallery`);
+  const url = new URL(`${getApiUrl()}/gallery`);
   if (opts?.category) url.searchParams.set('category', opts.category);
-  const res = await fetch(url.toString());
+  const res = await fetch(url.toString(), { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to load gallery');
   const data = await res.json();
   return data as Array<{ id: number; url: string; caption?: string | null; category: string }>;
@@ -253,18 +410,18 @@ export async function getGalleryAdmin(opts?: { category?: string }) {
 
 export async function getServicesPage() {
   try {
-    const res = await fetch(`${API_URL}/pages/services`);
-    if (!res.ok) throw new Error('Failed');
-    const page = await res.json();
-    return page.data;
-  } catch {
-    return MOCK_SERVICES_PAGE;
+    const { response, json } = await fetchJson(`${getApiUrl()}/pages/services`);
+    if (!response.ok) throw new Error('Failed');
+    return (json as any).data;
+  } catch (err) {
+    if (import.meta.env.DEV) return MOCK_SERVICES_PAGE;
+    throw err;
   }
 }
 
 export async function getServices() {
   try {
-    const res = await fetch(`${API_URL}/services`);
+    const res = await fetch(`${getApiUrl()}/services`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed');
     const data = await res.json();
     if (data.length === 0) return MOCK_SERVICES;
@@ -274,13 +431,14 @@ export async function getServices() {
       description: s.description,
       price: 'Contact for price' // Backend doesn't have price yet
     }));
-  } catch {
-    return MOCK_SERVICES;
+  } catch (err) {
+    if (import.meta.env.DEV) return MOCK_SERVICES;
+    throw err;
   }
 }
 
 export async function getServicesAdmin() {
-  const res = await fetch(`${API_URL}/services`);
+  const res = await fetch(`${getApiUrl()}/services`, { cache: 'no-store' });
   if (!res.ok) throw new Error('Failed to load services');
   const data = await res.json();
   return data as Array<{ id: number; title: string; description: string; icon?: string | null }>;
@@ -292,7 +450,7 @@ export async function getTestimonials() {
 
 export async function getProjects() {
   try {
-    const res = await fetch(`${API_URL}/projects`);
+    const res = await fetch(`${getApiUrl()}/projects`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed');
     const data = await res.json();
     if (data.length === 0) return MOCK_PROJECTS;
@@ -303,19 +461,20 @@ export async function getProjects() {
       category: p.category,
       client: 'Adah Client', // Placeholder
       location: 'Tanzania', // Placeholder
-      heroImage: { url: p.imageUrl },
+      heroImage: { url: normalizeMediaUrl(p.imageUrl) },
       gallery: [], // Placeholder until we have gallery table
       story: p.description,
       credits: [], // Placeholder
     }));
-  } catch {
-    return MOCK_PROJECTS;
+  } catch (err) {
+    if (import.meta.env.DEV) return MOCK_PROJECTS;
+    throw err;
   }
 }
 
 export async function getProjectBySlug(slug: string) {
   try {
-    const res = await fetch(`${API_URL}/projects/${slug}`);
+    const res = await fetch(`${getApiUrl()}/projects/${slug}`, { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed');
     const p = await res.json();
     return {
@@ -325,19 +484,35 @@ export async function getProjectBySlug(slug: string) {
       category: p.category,
       client: 'Adah Client',
       location: 'Tanzania',
-      heroImage: { url: p.imageUrl },
+      heroImage: { url: normalizeMediaUrl(p.imageUrl) },
       gallery: [],
       story: p.description,
       credits: [],
     };
-  } catch {
-    return MOCK_PROJECTS.find(p => p.slug === slug);
+  } catch (err) {
+    if (import.meta.env.DEV) return MOCK_PROJECTS.find(p => p.slug === slug);
+    throw err;
   }
 }
 
 export async function submitBooking(data: any) {
   console.log('Booking submitted:', data);
   return new Promise(resolve => setTimeout(resolve, 1000));
+}
+
+export async function submitContact(data: { name: string; email: string; message: string }) {
+  const response = await fetch(`${getApiUrl()}/contact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+
+  return response.json().catch(() => ({}));
 }
 
 export async function uploadImage(file: File) {
@@ -348,76 +523,95 @@ export async function uploadImage(file: File) {
     reader.readAsDataURL(file);
   });
 
-  const response = await fetch(`${API_URL}/uploads`, {
+  const response = await fetch(`${getApiUrl()}/uploads`, {
     method: 'POST',
     headers: getHeaders(),
+    cache: 'no-store',
     body: JSON.stringify({ dataUrl, filename: file.name }),
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to upload image');
+    throw new Error(await readErrorMessage(response));
   }
 
-  return response.json() as Promise<{ url: string }>;
+  const data = await response.json().catch(() => ({}));
+  return { url: normalizeMediaUrl((data as any)?.url) };
 }
 
 export async function createService(service: { title: string; description: string; icon?: string | null }) {
-  const response = await fetch(`${API_URL}/services`, {
+  const response = await fetch(`${getApiUrl()}/services`, {
     method: 'POST',
     headers: getHeaders(),
+    cache: 'no-store',
     body: JSON.stringify(service),
   });
-  if (!response.ok) throw new Error('Failed to create service');
-  return response.json();
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const created = await response.json();
+  notifyContentUpdated('services');
+  return created;
 }
 
 export async function updateService(id: number, service: { title: string; description: string; icon?: string | null }) {
-  const response = await fetch(`${API_URL}/services/${id}`, {
+  const response = await fetch(`${getApiUrl()}/services/${id}`, {
     method: 'PUT',
     headers: getHeaders(),
+    cache: 'no-store',
     body: JSON.stringify(service),
   });
-  if (!response.ok) throw new Error('Failed to update service');
-  return response.json();
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const updated = await response.json();
+  notifyContentUpdated('services');
+  return updated;
 }
 
 export async function deleteService(id: number) {
-  const response = await fetch(`${API_URL}/services/${id}`, {
+  const response = await fetch(`${getApiUrl()}/services/${id}`, {
     method: 'DELETE',
     headers: getHeaders(),
+    cache: 'no-store',
   });
-  if (!response.ok) throw new Error('Failed to delete service');
-  return response.json();
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const result = await response.json().catch(() => ({}));
+  notifyContentUpdated('services');
+  return result;
 }
 
 export async function createGalleryPhoto(photo: { url: string; caption?: string | null; category: string }) {
-  const response = await fetch(`${API_URL}/gallery`, {
+  const response = await fetch(`${getApiUrl()}/gallery`, {
     method: 'POST',
     headers: getHeaders(),
+    cache: 'no-store',
     body: JSON.stringify(photo),
   });
-  if (!response.ok) throw new Error('Failed to create photo');
-  return response.json();
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const created = await response.json();
+  notifyContentUpdated('gallery');
+  return created;
 }
 
 export async function updateGalleryPhoto(id: number, photo: { url: string; caption?: string | null; category: string }) {
-  const response = await fetch(`${API_URL}/gallery/${id}`, {
+  const response = await fetch(`${getApiUrl()}/gallery/${id}`, {
     method: 'PUT',
     headers: getHeaders(),
+    cache: 'no-store',
     body: JSON.stringify(photo),
   });
-  if (!response.ok) throw new Error('Failed to update photo');
-  return response.json();
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const updated = await response.json();
+  notifyContentUpdated('gallery');
+  return updated;
 }
 
 export async function deleteGalleryPhoto(id: number) {
-  const response = await fetch(`${API_URL}/gallery/${id}`, {
+  const response = await fetch(`${getApiUrl()}/gallery/${id}`, {
     method: 'DELETE',
     headers: getHeaders(),
+    cache: 'no-store',
   });
-  if (!response.ok) throw new Error('Failed to delete photo');
-  return response.json();
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  const result = await response.json().catch(() => ({}));
+  notifyContentUpdated('gallery');
+  return result;
 }
 
 function getHeaders() {
@@ -429,14 +623,14 @@ function getHeaders() {
 }
 
 export async function login(credentials: any) {
-  const response = await fetch(`${API_URL}/login`, {
+  const response = await fetch(`${getApiUrl()}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    cache: 'no-store',
     body: JSON.stringify(credentials)
   });
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Login failed');
+    throw new Error(await readErrorMessage(response));
   }
   return response.json();
 }

@@ -48,8 +48,8 @@ export default function Footer() {
               </div>
               <div>
                 <div style={{ color: 'white', marginBottom: 4 }}>Email</div>
-                <a href="mailto:hello@adahcreatives.com" style={{ color: '#888', textDecoration: 'none' }}>
-                  hello@adahcreatives.com
+                <a href="mailto:info@adahcreatives.co.tz" style={{ color: '#888', textDecoration: 'none' }}>
+                  info@adahcreatives.co.tz
                 </a>
               </div>
               <div>
@@ -64,8 +64,8 @@ export default function Footer() {
             <h4 className="footer-title" style={{ color: 'white', marginBottom: 24, fontSize: 14, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Follow Us</h4>
             <div style={{ display: 'flex', gap: 16 }}>
               <a href="https://www.instagram.com/adahcreatives/?hl=en" target="_blank" rel="noopener noreferrer" style={{ color: 'white', textDecoration: 'none' }}>Instagram</a>
-              <a href="#" style={{ color: '#888', textDecoration: 'none' }}>LinkedIn</a>
-              <a href="#" style={{ color: '#888', textDecoration: 'none' }}>WhatsApp</a>
+              <a href="https://www.linkedin.com/company/adah-creatives/" target="_blank" rel="noopener noreferrer" style={{ color: '#888', textDecoration: 'none' }}>LinkedIn</a>
+              <a href="https://wa.me/255652493048" target="_blank" rel="noopener noreferrer" style={{ color: '#888', textDecoration: 'none' }}>WhatsApp</a>
             </div>
           </div>
         </div>

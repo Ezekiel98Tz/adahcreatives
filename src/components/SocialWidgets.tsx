@@ -18,7 +18,7 @@ export default function SocialWidgets() {
     { 
       name: 'LinkedIn', 
       icon: 'https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png', 
-      href: '#', // Add linkedin link if provided
+      href: 'https://www.linkedin.com/company/adah-creatives/',
       bg: '#0077b5'
     }
   ]

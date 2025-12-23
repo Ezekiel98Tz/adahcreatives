@@ -74,24 +74,22 @@ export default function LoginPage() {
 
         <div className="flex items-center justify-center px-4 py-12 sm:px-6 lg:px-10">
           <div className="w-full max-w-md">
-            <div className="text-center lg:hidden mb-10">
-              <h1 className="text-4xl font-light tracking-widest text-black">ADAH</h1>
-              <p className="text-[11px] text-gray-500 font-semibold tracking-[0.28em] uppercase mt-2">
+            <div className="text-center mb-10">
+              <img
+                src="/images/logo.png"
+                srcSet="/images/logo.png 1x, /images/logo@2x.png 2x"
+                alt="Adah Creatives"
+                className="mx-auto h-16 w-auto"
+              />
+              <p className="mt-4 text-[11px] text-gray-500 font-semibold tracking-[0.28em] uppercase">
                 Admin Portal
               </p>
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-200 shadow-[0_18px_50px_-30px_rgba(0,0,0,0.35)] p-7 sm:p-8">
-              <div className="hidden lg:block">
-                <div className="text-xs font-semibold tracking-[0.28em] uppercase text-gray-500">
-                  Sign In
-                </div>
-                <h2 className="mt-3 text-2xl font-light text-black tracking-wide">
-                  Welcome back
-                </h2>
-                <p className="mt-2 text-sm text-gray-500">
-                  Enter your credentials to continue.
-                </p>
+              <div className="text-center">
+                <h2 className="serif text-3xl text-black tracking-wide">Sign In</h2>
+                <p className="mt-2 text-sm text-gray-500">Enter your credentials to continue.</p>
               </div>
 
               {error && (

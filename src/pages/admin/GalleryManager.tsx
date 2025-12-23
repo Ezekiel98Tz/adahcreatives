@@ -263,6 +263,7 @@ function GalleryPhotoEditor({ photo, isCreating, onCancel, onSaved, uploading, o
             />
             {uploading && <div className="text-sm text-gray-500">Uploading…</div>}
           </div>
+          <div className="mt-1 text-xs text-gray-500">Recommended: portrait \(1600×2000\) \(4:5\) or larger.</div>
           {formData.url && (
             <img src={formData.url} alt="Preview" className="mt-2 h-48 w-full object-cover rounded-lg bg-gray-50" />
           )}

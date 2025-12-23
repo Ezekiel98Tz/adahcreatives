@@ -249,6 +249,7 @@ export function ServicesPageEditor() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-light text-gray-900">Edit Services</h1>
         <button
+          type="button"
           onClick={handleSave}
           disabled={saving}
           className="flex items-center space-x-2 bg-black text-white px-6 py-2 rounded-lg hover:bg-gray-800 disabled:opacity-50 transition-colors"
@@ -264,7 +265,7 @@ export function ServicesPageEditor() {
         </div>
       )}
 
-      <form className="space-y-8">
+      <form className="space-y-8" onSubmit={handleSave}>
         <section className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Hero</h2>
           <div className="grid gap-6">
@@ -308,6 +309,7 @@ export function ServicesPageEditor() {
                 />
                 {uploadingKey === 'services.hero.image' && <div className="text-sm text-gray-500">Uploading…</div>}
               </div>
+              <div className="mt-1 text-xs text-gray-500">Recommended: landscape \(2560×1600\) or larger.</div>
               {data.hero?.image?.url && (
                 <img src={data.hero.image.url} alt="Preview" className="mt-2 h-40 w-full object-cover rounded-lg bg-gray-50" />
               )}
@@ -387,6 +389,7 @@ export function ServicesPageEditor() {
                         />
                         {uploading && <div className="text-sm text-gray-500">Uploading…</div>}
                       </div>
+                      <div className="mt-1 text-xs text-gray-500">Recommended: landscape \(2400×1600\) or larger.</div>
                       {url && (
                         <img src={url} alt="Preview" className="mt-2 h-40 w-full object-cover rounded-lg bg-white" />
                       )}

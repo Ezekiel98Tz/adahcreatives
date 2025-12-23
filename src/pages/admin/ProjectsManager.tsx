@@ -1,6 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { getProjects, createProject, updateProject, deleteProject } from '../../lib/api';
+import { getProjects, createProject, updateProject, deleteProject, uploadImage } from '../../lib/api';
 import { Plus, Edit2, Trash2, X, Save, Loader } from 'lucide-react';
+
+const DEFAULT_PROJECT_CATEGORIES = [
+  'Commercial & Brand Shoots',
+  'Corporate Events',
+  'Events & Official Ceremonies',
+  'Portraits',
+  'Headshots',
+  'Lifestyle',
+  'Product',
+  'Travel',
+  'Weddings',
+  'Documentaries',
+];
 
 export function ProjectsManager() {
   const [projects, setProjects] = useState<any[]>([]);
@@ -53,9 +66,22 @@ export function ProjectsManager() {
   if (loading) return <div className="flex justify-center p-12"><Loader className="animate-spin" /></div>;
 
   if (editingProject) {
+    const availableCategories = (() => {
+      const seen = new Set<string>();
+      for (const c of DEFAULT_PROJECT_CATEGORIES) seen.add(c);
+      for (const p of projects) {
+        const c = typeof p?.category === 'string' ? p.category.trim() : '';
+        if (c) seen.add(c);
+      }
+      const current = typeof editingProject?.category === 'string' ? editingProject.category.trim() : '';
+      if (current) seen.add(current);
+      return Array.from(seen);
+    })();
+
     return <ProjectEditor 
       project={editingProject} 
       isCreating={isCreating} 
+      availableCategories={availableCategories}
       onCancel={() => setEditingProject(null)} 
       onSave={async () => {
         await loadProjects();
@@ -124,9 +150,10 @@ export function ProjectsManager() {
   );
 }
 
-function ProjectEditor({ project, isCreating, onCancel, onSave }: any) {
+function ProjectEditor({ project, isCreating, availableCategories, onCancel, onSave }: any) {
   const [formData, setFormData] = useState(project);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // Map frontend fields to backend fields if necessary
   // Frontend: heroImage.url, story
@@ -141,6 +168,18 @@ function ProjectEditor({ project, isCreating, onCancel, onSave }: any) {
     });
   }, [project]);
 
+  async function handleUpload(file: File) {
+    try {
+      setUploading(true);
+      const result = await uploadImage(file);
+      setFormData((prev: any) => ({ ...(prev || {}), imageUrl: result.url }));
+    } catch (e: any) {
+      alert(e?.message || 'Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -148,7 +187,7 @@ function ProjectEditor({ project, isCreating, onCancel, onSave }: any) {
     // Prepare payload for backend
     const payload = {
       title: formData.title,
-      slug: formData.slug || formData.title.toLowerCase().replace(/\s+/g, '-'),
+      slug: formData.slug,
       category: formData.category,
       description: formData.description,
       imageUrl: formData.imageUrl
@@ -162,7 +201,8 @@ function ProjectEditor({ project, isCreating, onCancel, onSave }: any) {
       }
       await onSave();
     } catch (e) {
-      alert('Failed to save project');
+      const message = e instanceof Error ? e.message : '';
+      alert(message || 'Failed to save project');
     } finally {
       setSaving(false);
     }
@@ -191,24 +231,27 @@ function ProjectEditor({ project, isCreating, onCancel, onSave }: any) {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Slug (URL)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Slug (optional)</label>
             <input 
-              required
               type="text" 
-              value={formData.slug} 
+              value={formData.slug || ''} 
               onChange={e => setFormData({...formData, slug: e.target.value})}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-            <input 
+            <select
               required
-              type="text" 
-              value={formData.category} 
-              onChange={e => setFormData({...formData, category: e.target.value})}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none"
-            />
+              value={formData.category || ''}
+              onChange={e => setFormData({ ...formData, category: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-black focus:border-transparent outline-none"
+            >
+              <option value="" disabled>Select a category</option>
+              {(Array.isArray(availableCategories) ? availableCategories : []).map((c: string) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -221,6 +264,21 @@ function ProjectEditor({ project, isCreating, onCancel, onSave }: any) {
             onChange={e => setFormData({...formData, imageUrl: e.target.value})}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none"
           />
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                handleUpload(file);
+                e.currentTarget.value = '';
+              }}
+              className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+            />
+            {uploading && <div className="text-sm text-gray-500">Uploading…</div>}
+          </div>
+          <div className="mt-1 text-xs text-gray-500">Recommended: landscape \(2400×1600\) or larger.</div>
           {formData.imageUrl && (
             <img src={formData.imageUrl} alt="Preview" className="mt-2 h-48 w-full object-cover rounded-lg bg-gray-50" />
           )}

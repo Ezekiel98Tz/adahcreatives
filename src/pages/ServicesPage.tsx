@@ -80,6 +80,28 @@ export default function ServicesPage({ page, services }: Props) {
                     {s.items.map(item => <li key={item}>{item}</li>)}
                   </ul>
                 )}
+                {String(s.title || '').toLowerCase().includes('web design') && (
+                  <div style={{ marginTop: 28, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+                    <a
+                      href="https://elsdigital.com/portfolio"
+                      className="cta"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ background: 'black', color: 'white', fontSize: 14 }}
+                    >
+                      View Web Portfolio
+                    </a>
+                    <a
+                      href="https://elsdigital.com"
+                      className="cta"
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ background: 'transparent', color: 'black', border: '1px solid rgba(0,0,0,0.2)', fontSize: 14 }}
+                    >
+                      Visit ELS Digital
+                    </a>
+                  </div>
+                )}
               </motion.div>
             </div>
           ))}
