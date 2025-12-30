@@ -4,11 +4,12 @@ import Hero from '../components/Hero'
 import CircularGallery from '../components/CircularGallery'
 import { Home, Photo } from '../App'
 import { Link } from 'react-router-dom'
+import SEO from '../components/SEO';
 
 type Props = { home: Home | null; photos: Photo[] }
 
 export default function HomePage({ home, photos }: Props) {
-  console.log('HomePage: Rendering', { home, photos });
+
   const hero = home?.hero
   const servicesTeaser = home?.servicesTeaser
   const visualGallery = home?.visualGallery
@@ -31,6 +32,11 @@ export default function HomePage({ home, photos }: Props) {
       exit={{ opacity: 0 }}
       transition={{ duration: 0.5 }}
     >
+      <SEO 
+        title="High-End Photography & Cinematography"
+        description="Adah Creatives crafts timeless media for brands and individuals. From high-end photography to cinematic video production, we tell stories that resonate and endure."
+        imageUrl={hero?.image?.url}
+      />
       <Hero headline={hero?.headline} cta={hero?.cta} image={hero?.image} tagline={hero?.tagline} sub={hero?.subhead} />
       
       {/* Services Teaser */}

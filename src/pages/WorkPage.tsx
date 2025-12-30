@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { Project } from '../App'
+import SEO from '../components/SEO';
 
 type Props = { projects: Project[] }
 
@@ -43,6 +44,10 @@ export default function WorkPage({ projects }: Props) {
       className="page-top-padding"
       style={{ minHeight: '100vh' }}
     >
+      <SEO 
+        title="Our Work"
+        description="A curated blend of photography and film projects. Explore our portfolio of commercial shoots, corporate events, weddings, and more."
+      />
       <div className="container">
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <h1 className="serif" style={{ margin: 0 }}>Stories We’ve Told</h1>

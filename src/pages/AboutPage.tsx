@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import About from '../components/About'
 import Testimonials from '../components/Testimonials'
 import { AboutData, Testimonial } from '../App'
+import SEO from '../components/SEO';
 
 type Props = { about: AboutData | null; testimonials?: Testimonial[] }
 
@@ -19,6 +20,11 @@ export default function AboutPage({ about, testimonials = [] }: Props) {
       transition={{ duration: 0.5 }}
       style={{ paddingTop: 0, minHeight: '100vh', background: '#fff' }}
     >
+      <SEO 
+        title={hero?.title || 'Our Story'}
+        description={hero?.subtitle || 'We are a purpose-driven creative studio blending artistic vision with technical excellence.'}
+        imageUrl={hero?.image?.url}
+      />
       {/* Hero Section */}
       <section style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a0a', color: 'white', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, opacity: 0.4 }}>

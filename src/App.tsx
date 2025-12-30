@@ -13,6 +13,7 @@ import NotFoundPage from './pages/NotFoundPage'
 import GalleryPage from './pages/GalleryPage'
 import Footer from './components/Footer'
 import SocialWidgets from './components/SocialWidgets'
+import { HelmetProvider } from 'react-helmet-async'
 import { AuthProvider } from './context/AuthContext'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
@@ -74,12 +75,12 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true
-    console.log('App: Fetching data...');
+
     let initialFetchCompleted = false
     
     const timer = setTimeout(() => {
       if (mounted && !initialFetchCompleted) {
-        console.warn('Data loading timed out - forcing render');
+
         setLoading(false);
       }
     }, 5000);
@@ -101,7 +102,7 @@ export default function App() {
           getTestimonials(),
         ])
         if (!mounted || current !== requestId) return
-        console.log('App: Data fetched successfully', { h, pr, p, a })
+
         setHome(h)
         setProjects(pr)
         setPhotos(p)
@@ -110,7 +111,7 @@ export default function App() {
         setServices(s)
         setTestimonials(t)
       } catch (err) {
-        console.error('App: Data fetch failed', err)
+
       } finally {
         if (opts?.showLoader !== false) initialFetchCompleted = true
         if (mounted && showLoader) setLoading(false)
@@ -121,7 +122,7 @@ export default function App() {
     
     const onContentUpdated = (event: any) => {
       const slug = event?.detail?.slug
-      console.log('App: content-updated', slug)
+
       fetchAll({ showLoader: false })
     }
 
@@ -152,7 +153,8 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
+    <HelmetProvider>
+      <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
 
@@ -188,5 +190,6 @@ export default function App() {
         } />
       </Routes>
     </AuthProvider>
+  </HelmetProvider>
   )
 }

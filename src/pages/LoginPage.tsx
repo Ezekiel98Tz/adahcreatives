@@ -51,11 +51,14 @@ export default function LoginPage() {
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(250,177,47,0.25),transparent_60%)]" />
           </div>
 
-          <div className="relative h-full p-16 flex flex-col justify-between">
+          <div className="relative h-full p-16 flex flex-col justify-center items-center text-center">
             <div>
-              <div className="text-white/90 text-xs font-semibold tracking-[0.28em] uppercase">
-                ADAH Creatives
-              </div>
+              <img
+                src="/images/logo.png"
+                srcSet="/images/logo.png 1x, /images/logo@2x.png 2x"
+                alt="Adah Creatives"
+                className="h-16 w-auto mx-auto"
+              />
               <div className="mt-10 max-w-lg">
                 <h1 className="serif text-5xl text-white leading-tight">
                   Admin Portal
@@ -66,7 +69,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="text-white/50 text-xs tracking-wide">
+            <div className="text-white/50 text-xs tracking-wide absolute bottom-16">
               Protected area. Authorized access only.
             </div>
           </div>

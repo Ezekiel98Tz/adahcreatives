@@ -27,6 +27,8 @@ app.use(cors());
 app.use(express.json({ limit: '25mb' }));
 app.use('/uploads', express.static(path.resolve('uploads')));
 
+app.use(express.static(path.resolve('dist')));
+
 app.use((err, req, res, next) => {
   const parseFailed =
     err &&
@@ -130,7 +132,7 @@ app.put('/api/pages/:slug', authenticateToken, async (req, res) => {
     });
     res.json({ ...page, data: JSON.parse(page.data) });
   } catch (error) {
-    console.error(error);
+
     res.status(500).json({ error: "Failed to update page" });
   }
 });
@@ -545,6 +547,11 @@ app.use((err, req, res, next) => {
     return res.status(status).json({ error: message });
   }
   next(err);
+});
+
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.resolve('dist/index.html'));
 });
 
 app.listen(PORT, () => {

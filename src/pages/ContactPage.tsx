@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
+import SEO from '../components/SEO'
 
 type Props = { onSubmit: (data: { name: string; email: string; message?: string }) => Promise<void> }
 
@@ -66,6 +67,10 @@ export default function ContactPage({ onSubmit }: Props) {
       transition={{ duration: 0.5 }}
       style={{ paddingTop: 0, minHeight: '100vh', background: '#fff' }}
     >
+      <SEO
+        title="Contact Us"
+        description="Get in touch with Adah Creatives for collaborations, inquiries, or just to say hello."
+      />
       {/* Header */}
       <section className="responsive-header-padding" style={{ background: '#111', color: 'white', textAlign: 'center' }}>
         <div className="container">

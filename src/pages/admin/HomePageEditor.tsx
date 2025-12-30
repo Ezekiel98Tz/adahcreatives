@@ -9,6 +9,7 @@ export function HomePageEditor() {
   const [uploadingKey, setUploadingKey] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [pendingTrustedByFocusId, setPendingTrustedByFocusId] = useState<string | null>(null);
+  const [pendingCarouselFocusId, setPendingCarouselFocusId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -23,6 +24,17 @@ export function HomePageEditor() {
     input.focus();
     setPendingTrustedByFocusId(null);
   }, [pendingTrustedByFocusId, data]);
+
+  useEffect(() => {
+    if (!pendingCarouselFocusId) return;
+    const selector = `[data-carousel-id="${pendingCarouselFocusId}"]`;
+    const el = document.querySelector(selector) as HTMLDivElement | null;
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    const input = el.querySelector('input[type="text"]');
+    if (input instanceof HTMLInputElement) input.focus();
+    setPendingCarouselFocusId(null);
+  }, [pendingCarouselFocusId, data]);
 
   const createId = () => {
     try {
@@ -137,17 +149,18 @@ export function HomePageEditor() {
   };
 
   function addCarouselItem() {
-    const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2)}`;
+    const id = createId();
     setData((prev: any) => {
       const carousel = Array.isArray(prev?.visualStories?.carousel) ? prev.visualStories.carousel : [];
       return {
         ...(prev || {}),
         visualStories: {
           ...(prev?.visualStories || {}),
-          carousel: [...carousel, { id, title: '', image: { url: '' } }],
+          carousel: [{ id, title: '', image: { url: '' } }, ...carousel],
         },
       };
     });
+    setPendingCarouselFocusId(id);
   }
 
   function updateCarouselItem(index: number, patch: any) {
@@ -456,6 +469,88 @@ export function HomePageEditor() {
               />
             </div>
           </div>
+
+          <div className="pt-6 border-t mt-6">
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium text-gray-900">Carousel Images</div>
+              <button
+                type="button"
+                onClick={addCarouselItem}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors text-sm"
+              >
+                <Plus size={16} />
+                <span>Add Image</span>
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-4">
+              {(Array.isArray(data.visualStories.carousel) ? data.visualStories.carousel : []).map((item: any, index: number) => {
+                const url = item?.image?.url || item?.url || '';
+                const uploading = uploadingKey === `home.visualStories.carousel.${index}`;
+                return (
+                  <div key={item.id || index} data-carousel-id={item.id} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-gray-900">Item {index + 1}</div>
+                      <button
+                        type="button"
+                        onClick={() => removeCarouselItem(index)}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors text-sm"
+                      >
+                        <Trash2 size={16} />
+                        <span>Remove</span>
+                      </button>
+                    </div>
+
+                    <div className="mt-3 grid gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Title (optional)</label>
+                        <input
+                          type="text"
+                          value={item?.title || ''}
+                          onChange={(e) => updateCarouselItem(index, { title: e.target.value })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                        <input
+                          type="text"
+                          value={url}
+                          onChange={(e) => updateCarouselItem(index, { image: { url: e.target.value } })}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none"
+                        />
+
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              uploadToPath(`home.visualStories.carousel.${index}`, file, (uploadedUrl) => updateCarouselItem(index, { image: { url: uploadedUrl } }));
+                              e.currentTarget.value = '';
+                            }}
+                            className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
+                          />
+                          {uploading && <div className="text-sm text-gray-500">Uploading…</div>}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-500">Recommended: portrait \(1600×2000\) \(4:5\) or larger.</div>
+
+                        {url && (
+                          <img src={url} alt="Preview" className="mt-2 h-40 w-full object-cover rounded-lg bg-white" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {(Array.isArray(data.visualStories.carousel) ? data.visualStories.carousel : []).length === 0 && (
+                <div className="text-sm text-gray-500">No carousel images yet.</div>
+              )}
+            </div>
+          </div>
         </section>
 
         {/* Legacy / Philosophy Section */}
@@ -515,88 +610,6 @@ export function HomePageEditor() {
               {data.visualStories.image?.url && (
                 <img src={data.visualStories.image.url} alt="Preview" className="mt-2 h-40 w-full object-cover rounded-lg bg-gray-50" />
               )}
-            </div>
-
-            <div className="pt-2">
-              <div className="flex items-center justify-between">
-                <div className="text-sm font-medium text-gray-900">Carousel Images</div>
-                <button
-                  type="button"
-                  onClick={addCarouselItem}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-black text-white hover:bg-gray-800 transition-colors text-sm"
-                >
-                  <Plus size={16} />
-                  <span>Add Image</span>
-                </button>
-              </div>
-
-              <div className="mt-4 space-y-4">
-                {(Array.isArray(data.visualStories.carousel) ? data.visualStories.carousel : []).map((item: any, index: number) => {
-                  const url = item?.image?.url || item?.url || '';
-                  const uploading = uploadingKey === `home.visualStories.carousel.${index}`;
-                  return (
-                    <div key={item?.id || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-center justify-between">
-                        <div className="text-sm font-medium text-gray-900">Item {index + 1}</div>
-                        <button
-                          type="button"
-                          onClick={() => removeCarouselItem(index)}
-                          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors text-sm"
-                        >
-                          <Trash2 size={16} />
-                          <span>Remove</span>
-                        </button>
-                      </div>
-
-                      <div className="mt-3 grid gap-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Title (optional)</label>
-                          <input
-                            type="text"
-                            value={item?.title || ''}
-                            onChange={(e) => updateCarouselItem(index, { title: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                          <input
-                            type="text"
-                            value={url}
-                            onChange={(e) => updateCarouselItem(index, { image: { url: e.target.value } })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent outline-none"
-                          />
-
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (!file) return;
-                                uploadToPath(`home.visualStories.carousel.${index}`, file, (uploadedUrl) => updateCarouselItem(index, { image: { url: uploadedUrl } }));
-                                e.currentTarget.value = '';
-                              }}
-                              className="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200"
-                            />
-                            {uploading && <div className="text-sm text-gray-500">Uploading…</div>}
-                          </div>
-                          <div className="mt-1 text-xs text-gray-500">Recommended: portrait \(1600×2000\) \(4:5\) or larger.</div>
-
-                          {url && (
-                            <img src={url} alt="Preview" className="mt-2 h-40 w-full object-cover rounded-lg bg-white" />
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {(Array.isArray(data.visualStories.carousel) ? data.visualStories.carousel : []).length === 0 && (
-                  <div className="text-sm text-gray-500">No carousel images yet.</div>
-                )}
-              </div>
             </div>
           </div>
         </section>

@@ -8,7 +8,9 @@
     "server": "ts-node server/index.ts",
     "dashboard": "prisma studio",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "sitemap": "node scripts/generate-sitemap.cjs",
+    "build:server": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
@@ -27,6 +29,7 @@
     "prisma": "^5.22.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-helmet-async": "^2.0.5",
     "react-router-dom": "^7.9.6"
   },
   "devDependencies": {

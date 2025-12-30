@@ -337,7 +337,7 @@ export async function updatePageData(slug: string, data: any) {
     notifyContentUpdated(slug);
     return result;
   } catch (error) {
-    console.error(`Error updating page ${slug}:`, error);
+
     throw error;
   }
 }

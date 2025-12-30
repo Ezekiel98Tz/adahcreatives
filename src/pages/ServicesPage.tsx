@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Service, ServicesPageData } from '../App'
+import SEO from '../components/SEO';
 
 type Props = { page: ServicesPageData | null; services: Service[] }
 
@@ -17,6 +18,11 @@ export default function ServicesPage({ page, services }: Props) {
       transition={{ duration: 0.5 }}
       style={{ paddingTop: 0, minHeight: '100vh', background: '#fff' }}
     >
+      <SEO 
+        title={hero.title || 'Our Expertise'}
+        description={hero.subtitle}
+        imageUrl={hero?.image?.url}
+      />
       <section style={{ height: '50vh', background: '#111', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', inset: 0, opacity: 0.35 }}>
           <img
